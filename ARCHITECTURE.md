@@ -8,7 +8,7 @@
 | Styling | Tailwind CSS 3, Lucide icons, `next/font` (Inter, Fraunces) |
 | Database | Neon serverless Postgres |
 | ORM / migrations | Drizzle ORM, SQL migrations committed in `drizzle/` |
-| Auth | Email + password (bcrypt), server-side sessions in Postgres |
+| Auth | Email + password (bcrypt), server-side sessions, recovery-code password reset |
 | Validation | Zod (server), plus mirrored instant checks in the browser |
 | Hosting | Vercel (functions + CDN) |
 
@@ -37,11 +37,15 @@ The rule: **actions are thin, services hold the logic.** An action checks who yo
 ```
 users ──< sessions
   │
-  ├──< rsvps >── events >── grottos
+  ├──< rsvps >── events >── grottos (clubs)
   ├──< reviews >──┘            │
-  └──< grotto_reviews >────────┘
+  ├──< grotto_reviews >────────┘
+  ├──< questions ──< answers          helpful_votes (question or answer)
+  └──< gear_reviews (keyed by gear slug; gear content lives in lib/data/gear.ts)
 contact_messages, rate_limits (standalone)
 ```
+
+Users carry a self-declared `skill_level` (beginner, intermediate, vertical, rescue) and a `role` (member, expert, admin). Only admins grant `expert`, which shows a "Verified expert" badge next to posts.
 
 - `rsvps` has a composite primary key (event, user), so double RSVPs are impossible.
 - `reviews` and `grotto_reviews` have a unique (target, user) index: one review each, editable.
@@ -54,6 +58,12 @@ contact_messages, rate_limits (standalone)
 **Overbooking is impossible.** An RSVP runs in a transaction that locks the event row, counts current RSVPs, and only then inserts. The UI updates optimistically (`useOptimistic`) and rolls back with a message if the server refuses.
 
 **Sessions.** Signing in creates a random 256-bit token. The cookie holds the token (httpOnly, SameSite=Lax, Secure in production); the database stores only its SHA-256 hash, so a database leak does not yield usable sessions. Sign-in always runs a password comparison, even for unknown emails, and returns one generic error.
+
+**Password recovery without email.** Sign-up shows a random 16-character recovery code once (80 bits). Only its SHA-256 hash is stored. Resetting a password needs the email plus the code; it is single-use (rotated on every reset), revokes all sessions, is rate-limited per account and per IP, and gives the same error for a wrong email or a wrong code. Existing accounts generate a code from `/account` after confirming their password. Trade-off: lose both password and code and you must contact the admins.
+
+**Expert content.** Gear guides are curated data (`lib/data/gear.ts`). A guide shows "Expert reviewed by NAME on DATE" only when the `review` field is set, otherwise "Awaiting expert review". Nothing claims a review that hasn't happened.
+
+**Q&A rules.** You can't mark your own post helpful, one answer per person per question, only the asker can accept an answer, and helpful votes are one per person. Enforced in `lib/services/qa.ts`.
 
 **Review integrity.** The server, not the UI, decides who may review: an event review needs an RSVP and a finished event; a grotto rating needs membership or a past joined expedition.
 
@@ -79,7 +89,7 @@ contact_messages, rate_limits (standalone)
 
 ## Known limitations
 
-- No email verification or password reset yet (needs an email provider).
+- No email verification, and password reset relies on a recovery code because sending email needs a verified domain.
 - Cover photos are chosen from a bundled set; there are no uploads.
 - Times are shown in UTC.
 - Contact messages are stored in the database and read at `/admin/messages` by admin accounts.

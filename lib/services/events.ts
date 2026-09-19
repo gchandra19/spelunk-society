@@ -1,8 +1,8 @@
 import { and, asc, count, desc, eq, gt, gte, lt, sql } from "drizzle-orm";
 import { getDb, tables } from "@/lib/db";
-import type { CavingEvent, Difficulty } from "@/types/domain";
+import type { CavingEvent, Difficulty, Role } from "@/types/domain";
 
-const { events, rsvps, users, grottos, reviews } = tables;
+const { events, rsvps, users, grottos, reviews, helpfulVotes } = tables;
 
 const rsvpCount = sql<number>`(select count(*)::int from ${rsvps} where ${rsvps.eventId} = ${events.id})`;
 
@@ -15,6 +15,7 @@ const eventSelect = {
   title: events.title,
   description: events.description,
   caveName: events.caveName,
+  region: events.region,
   startsAt: events.startsAt,
   durationHours: events.durationHours,
   difficulty: events.difficulty,
@@ -31,7 +32,7 @@ const eventSelect = {
 };
 
 type Row = {
-  id: string; title: string; description: string; caveName: string; startsAt: Date; durationHours: number;
+  id: string; title: string; description: string; caveName: string; region: string | null; startsAt: Date; durationHours: number;
   difficulty: Difficulty; capacity: number; status: "published" | "cancelled"; imageSrc: string; imageAlt: string;
   hostId: string | null; hostUser: string | null; grottoName: string | null; rsvpCount: number;
   reviewCount: number; ratingAverage: string | null;
@@ -42,6 +43,7 @@ const toEvent = (r: Row): CavingEvent => ({
   title: r.title,
   description: r.description,
   caveName: r.caveName,
+  region: r.region,
   eventDate: r.startsAt.toISOString(),
   durationHours: r.durationHours,
   hostedBy: r.grottoName ?? r.hostUser ?? "The Spelunkers Society",
@@ -68,18 +70,28 @@ export async function listPastEvents(limit = 50): Promise<CavingEvent[]> {
   return rows.map(toEvent);
 }
 
+export async function listEventsForGrotto(grottoId: string, limit = 30): Promise<CavingEvent[]> {
+  const rows = await base().where(and(eq(events.grottoId, grottoId), eq(events.status, "published"))).orderBy(desc(events.startsAt)).limit(limit);
+  return rows.map(toEvent);
+}
+
 export async function getEvent(id: string): Promise<CavingEvent | null> {
   const [row] = await base().where(eq(events.id, id)).limit(1);
   return row ? toEvent(row) : null;
 }
 
-export async function getViewerRsvpAndHostedIds(userId: string) {
+export async function getViewerState(userId: string) {
   const db = getDb();
-  const [going, hosted] = await Promise.all([
+  const [going, hosted, votes] = await Promise.all([
     db.select({ id: rsvps.eventId }).from(rsvps).where(eq(rsvps.userId, userId)),
     db.select({ id: events.id }).from(events).where(eq(events.hostId, userId)),
+    db.select({ type: helpfulVotes.targetType, id: helpfulVotes.targetId }).from(helpfulVotes).where(eq(helpfulVotes.userId, userId)),
   ]);
-  return { rsvpIds: going.map((r) => r.id), hostedIds: hosted.map((r) => r.id) };
+  return {
+    rsvpIds: going.map((r) => r.id),
+    hostedIds: hosted.map((r) => r.id),
+    voteKeys: votes.map((v) => `${v.type}:${v.id}`),
+  };
 }
 
 export async function countMembers(): Promise<number> {
@@ -111,7 +123,7 @@ export async function toggleRsvp(userId: string, eventId: string): Promise<RsvpO
 }
 
 export interface NewEventInput {
-  title: string; description: string; caveName: string; startsAt: Date; durationHours: number;
+  title: string; description: string; caveName: string; region: string | null; startsAt: Date; durationHours: number;
   difficulty: Difficulty; capacity: number; grottoId: string | null; image: { src: string; alt: string };
 }
 
@@ -128,7 +140,7 @@ export async function createEvent(hostId: string, input: NewEventInput): Promise
   const [row] = await db
     .insert(events)
     .values({
-      title: input.title, description: input.description, caveName: input.caveName, startsAt: input.startsAt,
+      title: input.title, description: input.description, caveName: input.caveName, region: input.region, startsAt: input.startsAt,
       durationHours: input.durationHours, difficulty: input.difficulty, capacity: input.capacity, grottoId: input.grottoId,
       imageSrc: input.image.src, imageAlt: input.image.alt, hostId,
     })
@@ -136,7 +148,7 @@ export async function createEvent(hostId: string, input: NewEventInput): Promise
   return { ok: true, id: row.id };
 }
 
-export async function cancelEvent(userId: string, role: "member" | "admin", eventId: string): Promise<boolean> {
+export async function cancelEvent(userId: string, role: Role, eventId: string): Promise<boolean> {
   const db = getDb();
   const owner = role === "admin" ? undefined : eq(events.hostId, userId);
   const updated = await db

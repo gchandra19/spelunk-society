@@ -47,7 +47,7 @@ export function EventCard({ event }: { readonly event: CavingEvent }) {
         )}
 
         <ul className="space-y-1 text-sm text-slate-300">
-          <li className="flex items-center gap-2"><MapPin size={15} className="text-slate-500" aria-hidden />{event.caveName}</li>
+          <li className="flex items-center gap-2"><MapPin size={15} className="text-slate-500" aria-hidden />{event.caveName}{event.region ? <span className="text-slate-500"> &middot; {event.region}</span> : null}</li>
           <li className="flex items-center gap-2"><Clock size={15} className="text-slate-500" aria-hidden />{formatTime(event.eventDate)} &middot; {event.durationHours}h</li>
         </ul>
 

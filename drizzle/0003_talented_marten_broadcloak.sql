@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "skill_level" text DEFAULT 'beginner' NOT NULL;

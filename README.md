@@ -7,20 +7,24 @@ A community site for caving clubs: find expeditions, RSVP, host your own, and re
 ## Features
 
 **Expeditions**
-- Browse upcoming and past expeditions. Search, and filter by difficulty (Beginner, Vertical, Rescue).
-- Each expedition shows the cave, date and time (UTC), duration, host grotto, what to expect and what to bring.
-- One-tap RSVP with a live capacity bar. The count updates instantly and never overbooks, even when several people grab the last spot at once.
-- Add an expedition to your calendar (`.ics`) or share its link.
-- **Host your own:** any member can publish an expedition with a cover photo, capacity and difficulty, and cancel it later.
-- **My Expeditions:** everything you're going to or hosting.
+- Browse upcoming and past expeditions from clubs worldwide. Search by name, cave, country or club, and filter by difficulty (Beginner, Vertical, Rescue).
+- One-tap RSVP with a live capacity bar. It never overbooks, even when several people grab the last spot at once.
+- Add an expedition to your calendar (`.ics`) or share its link. Host your own and cancel it later.
+- After an expedition ends, people who joined can leave a star rating and review.
 
-**Reviews and ratings**
-- After an expedition ends, people who joined it can leave a star rating and a written review. One review each, editable.
-- Members of a grotto, and people who joined its expeditions, can rate the grotto.
+**Questions & answers**
+- Ask, answer and search. Mark answers helpful, and the asker can accept the one that solved it. Readable by everyone, no account needed.
+- Every post shows the author's level, and admin-verified **Experts** get a badge.
 
-**Community**
-- Member accounts (email and password) with optional grotto membership.
-- Grotto directory with member counts, meeting times and ratings.
+**Gear guides**
+- What to look for, what to avoid, standards, budget advice and where to get it, for 16 pieces of gear, with member reviews.
+- Life-safety gear is flagged. Guides say **"Awaiting expert review"** until a named instructor is recorded (see [CONTRIBUTING.md](CONTRIBUTING.md)).
+
+**Clubs**
+- Clubs and grottos with member lists, meeting times, expeditions and ratings. Join or leave any club. Members and people who joined a club's expeditions can rate it.
+
+**Members**
+- Choose a level (Beginner, Intermediate, Vertical, Rescue). Sign in with email and password; if you forget it, reset it with the **recovery code** shown when you join (no email service needed).
 - Contact form for questions and feedback.
 
 ## Quick start
@@ -32,7 +36,7 @@ npm install
 cp .env.example .env.local     # add your DATABASE_URL
 npm run db:migrate             # create the tables
 npm run db:seed                # starter grottos and upcoming expeditions
-npm run db:seed:demo           # optional: fictional members, past expeditions and reviews
+npm run db:seed:demo           # optional: fictional members, clubs, expeditions, Q&A and reviews
 npm run dev                    # http://localhost:3000
 ```
 
@@ -43,7 +47,8 @@ npm run dev                    # http://localhost:3000
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:test` | Business-logic checks against the database |
 | `npm run e2e` | Browser test of the main flows (needs `npm run build && npm start` running) |
-| `npm run make-admin -- you@example.com` | Grant an account access to `/admin/messages` |
+| `npm run make-admin -- you@example.com` | Grant admin (reads `/admin/messages`) |
+| `npm run make-admin -- you@example.com expert` | Grant the verified-expert badge |
 | `npm run db:unseed:demo` | Remove the demo content |
 
 ## Deploying

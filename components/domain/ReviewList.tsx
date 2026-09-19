@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import { AuthorLine } from "@/components/domain/MemberBadge";
 import { formatShortDate } from "@/lib/format";
 import type { Review } from "@/types/domain";
 
@@ -22,10 +23,10 @@ export function ReviewList({ reviews }: { readonly reviews: readonly Review[] })
         {reviews.map((r) => (
           <li key={r.id} className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
             <div className="flex items-center justify-between gap-3">
-              <p className="font-medium">{r.authorName}</p>
+              <AuthorLine author={r} />
               <time dateTime={r.createdAt} className="text-xs text-slate-500">{formatShortDate(r.createdAt)}</time>
             </div>
-            <div className="mt-1"><Stars value={r.rating} /></div>
+            <div className="mt-2"><Stars value={r.rating} /></div>
             <p className="mt-3 whitespace-pre-line text-slate-300">{r.body}</p>
           </li>
         ))}

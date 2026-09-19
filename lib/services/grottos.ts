@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, lt, sql } from "drizzle-orm";
 import { getDb, tables } from "@/lib/db";
-import type { Grotto, GrottoReview } from "@/types/domain";
+import type { Grotto, Review, Role, SkillLevel } from "@/types/domain";
 
 const { grottos, grottoReviews, users, events, rsvps } = tables;
 
@@ -26,15 +26,40 @@ export async function listGrottos(): Promise<Grotto[]> {
   }));
 }
 
-export async function listGrottoReviews(grottoId: string, limit = 3): Promise<GrottoReview[]> {
+export async function getGrotto(id: string): Promise<Grotto | null> {
+  return (await listGrottos()).find((g) => g.id === id) ?? null;
+}
+
+export async function listGrottoReviews(grottoId: string, limit = 3): Promise<Review[]> {
   const rows = await getDb()
-    .select({ id: grottoReviews.id, authorName: users.name, rating: grottoReviews.rating, body: grottoReviews.body, createdAt: grottoReviews.createdAt })
+    .select({
+      id: grottoReviews.id, userId: grottoReviews.userId, authorName: users.name, authorLevel: users.skillLevel, authorRole: users.role,
+      rating: grottoReviews.rating, body: grottoReviews.body, createdAt: grottoReviews.createdAt,
+    })
     .from(grottoReviews)
     .innerJoin(users, eq(users.id, grottoReviews.userId))
     .where(eq(grottoReviews.grottoId, grottoId))
     .orderBy(desc(grottoReviews.createdAt))
     .limit(limit);
   return rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }));
+}
+
+export interface ClubMember {
+  readonly id: string;
+  readonly name: string;
+  readonly skillLevel: SkillLevel;
+  readonly role: Role;
+}
+
+/** Experts first, then by name. Only public profile fields are returned. */
+export async function listGrottoMembers(grottoId: string, limit = 60): Promise<ClubMember[]> {
+  const rows = await getDb()
+    .select({ id: users.id, name: users.name, skillLevel: users.skillLevel, role: users.role })
+    .from(users)
+    .where(eq(users.grottoId, grottoId))
+    .orderBy(asc(users.name))
+    .limit(limit);
+  return [...rows].sort((a, b) => Number(b.role === "expert") - Number(a.role === "expert"));
 }
 
 /** Members of a grotto, or anyone who joined one of its past expeditions, can rate it. One rating each (editable). */

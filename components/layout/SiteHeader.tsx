@@ -8,10 +8,11 @@ import { useViewer } from "@/components/providers/ViewerProvider";
 import { signOutAction } from "@/lib/actions/auth";
 
 const LINKS = [
-  { href: "/", label: "Home" },
   { href: "/events", label: "Expeditions" },
-  { href: "/grottos", label: "Grottos" },
-  { href: "/my-expeditions", label: "My Expeditions" },
+  { href: "/questions", label: "Q&A" },
+  { href: "/gear", label: "Gear" },
+  { href: "/grottos", label: "Clubs" },
+  { href: "/my-expeditions", label: "My trips" },
 ] as const;
 
 export function SiteHeader() {
@@ -47,7 +48,8 @@ export function SiteHeader() {
     if (viewer.user) {
       return (
         <div className={`flex items-center gap-2 ${mobile ? "flex-col items-stretch" : ""}`}>
-          <Link href="/events/new" className="rounded-lg bg-amber-400 px-3.5 py-2 text-center text-sm font-semibold text-slate-950 hover:bg-amber-300">Host an expedition</Link>
+          <Link href="/events/new" className="rounded-lg bg-amber-400 px-3.5 py-2 text-center text-sm font-semibold text-slate-950 hover:bg-amber-300">Host a trip</Link>
+          <Link href="/account" className="rounded-lg px-3 py-2 text-center text-sm text-slate-300 hover:text-white" title={`Signed in as ${viewer.user.name}`}>Account</Link>
           <button type="button" onClick={signOut} disabled={signingOut} className="flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm text-slate-400 hover:text-white" title={`Signed in as ${viewer.user.name}`}>
             <LogOut size={15} aria-hidden />Sign out
           </button>

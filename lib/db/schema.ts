@@ -22,7 +22,9 @@ export const users = pgTable(
     name: text("name").notNull(),
     passwordHash: text("password_hash").notNull(),
     grottoId: text("grotto_id").references(() => grottos.id, { onDelete: "set null" }),
-    role: text("role", { enum: ["member", "admin"] }).notNull().default("member"),
+    role: text("role", { enum: ["member", "expert", "admin"] }).notNull().default("member"),
+    skillLevel: text("skill_level", { enum: ["beginner", "intermediate", "vertical", "rescue"] }).notNull().default("beginner"),
+    recoveryCodeHash: text("recovery_code_hash"), // sha256 of a one-time recovery code; the code itself is never stored
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("users_email_uq").on(t.email)],
@@ -51,6 +53,7 @@ export const events = pgTable(
     capacity: integer("capacity").notNull(),
     imageSrc: text("image_src").notNull(),
     imageAlt: text("image_alt").notNull(),
+    region: text("region"), // e.g. "Kentucky, USA"
     status: text("status", { enum: ["published", "cancelled"] }).notNull().default("published"),
     hostId: text("host_id").references(() => users.id, { onDelete: "set null" }),
     grottoId: text("grotto_id").references(() => grottos.id, { onDelete: "set null" }),
@@ -119,3 +122,56 @@ export const contactMessages = pgTable("contact_messages", {
   userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: createdAt(),
 });
+
+export const questions = pgTable(
+  "questions",
+  {
+    id: id(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    tags: text("tags").array().notNull().default(sql`'{}'::text[]`),
+    authorId: text("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    acceptedAnswerId: text("accepted_answer_id"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("questions_created_idx").on(t.createdAt)],
+);
+
+export const answers = pgTable(
+  "answers",
+  {
+    id: id(),
+    questionId: text("question_id").notNull().references(() => questions.id, { onDelete: "cascade" }),
+    authorId: text("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("answers_question_author_uq").on(t.questionId, t.authorId)],
+);
+
+export const helpfulVotes = pgTable(
+  "helpful_votes",
+  {
+    targetType: text("target_type", { enum: ["question", "answer"] }).notNull(),
+    targetId: text("target_id").notNull(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.targetType, t.targetId, t.userId] })],
+);
+
+export const gearReviews = pgTable(
+  "gear_reviews",
+  {
+    id: id(),
+    gearSlug: text("gear_slug").notNull(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    rating: smallint("rating").notNull(),
+    body: text("body").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("gear_reviews_slug_user_uq").on(t.gearSlug, t.userId),
+    check("gear_reviews_rating_ck", sql`${t.rating} between 1 and 5`),
+  ],
+);

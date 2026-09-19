@@ -35,6 +35,9 @@ export function CreateEventForm({ grottos }: { readonly grottos: readonly { id: 
         <Field label="Cave or location" name="caveName" error={fieldError(state, "caveName")}>
           <input id="caveName" name="caveName" defaultValue={fieldValue(state, "caveName")} required maxLength={120} className={inputClass} />
         </Field>
+        <Field label="Region or country" name="region" error={fieldError(state, "region")} hint="For example: Yorkshire, UK or Slovenia.">
+          <input id="region" name="region" maxLength={80} defaultValue={fieldValue(state, "region")} className={inputClass} />
+        </Field>
         <Field label="Start (UTC)" name="startsAt" error={fieldError(state, "startsAt")} hint="Times are shown to everyone in UTC.">
           <input id="startsAt" name="startsAt" type="datetime-local" defaultValue={fieldValue(state, "startsAt")} required className={inputClass} />
         </Field>

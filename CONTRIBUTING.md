@@ -28,6 +28,16 @@ Follow **Quick start** in the [README](README.md). Use your own free Neon databa
 - Photos must be openly licensed (public domain or CC) and credited in `lib/data/photos.ts`.
 - Keep the UI accessible: labels on inputs, visible focus, meaningful alt text.
 
+## Expert review of gear guides
+
+Gear guides live in `lib/data/gear.ts`. When a qualified caving instructor has checked a guide, record them on that item:
+
+```ts
+review: { by: "Jane Smith, cave instructor (BCA)", on: "2026-11-02" }
+```
+
+Only add this once the review has really happened. Until then the site shows "Awaiting expert review". Grant a member the **Expert** badge with `npm run make-admin -- their@email expert`.
+
 ## Reporting security issues
 
 Please don't open a public issue. See [SECURITY.md](SECURITY.md).

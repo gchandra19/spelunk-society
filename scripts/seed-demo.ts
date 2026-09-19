@@ -1,4 +1,5 @@
-// Demo content: fictional members, past expeditions at real caves, and their reviews.
+// Demo content: fictional members at every skill level, worldwide clubs, expeditions, reviews, Q&A and gear reviews.
+// The Q&A, gear and worldwide-club data lives in demo-content.ts.
 // Idempotent (fixed ids + onConflictDoNothing). Demo accounts get an unusable random password, so nobody can sign in as them.
 // Remove everything again with: npm run db:unseed:demo
 import { config } from "dotenv";
@@ -6,19 +7,14 @@ config({ path: ".env.local" });
 
 import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
-import { like } from "drizzle-orm";
+import { like, sql } from "drizzle-orm";
 import { PHOTOS, type PhotoKey } from "../lib/data/photos";
 import { getDb, tables } from "../lib/db";
+import { CLUB_REGIONS, GEAR_REVIEWS, NEW_CLUBS, NEW_CLUB_RATINGS, QUESTIONS, STARTER_GOING, STARTER_REGION, UPCOMING, USERS } from "./demo-content";
 
 const DAY = 86_400_000;
 const at = (iso: string) => new Date(iso);
 
-const USERS = [
-  ["Maya Okafor", "central"], ["Liam Hendricks", "central"], ["Priya Nair", "rescue"], ["Tomás Herrera", "rescue"],
-  ["Grace Whitfield", "central"], ["Jonas Berg", "central"], ["Aiko Tanaka", "rescue"], ["Daniel Reyes", "central"],
-  ["Sofia Marchetti", null], ["Ethan Brooks", "rescue"], ["Nadia Petrova", "central"], ["Owen Gallagher", null],
-  ["Hana Kim", "central"], ["Marcus Bell", "rescue"],
-] as const;
 
 const uid = (n: number) => `demo-u${String(n).padStart(2, "0")}`; // n is 1-based
 const email = (name: string) => `${name.toLowerCase().normalize("NFD").replace(/[^a-z ]/g, "").replace(/ /g, ".")}@demo.spelunkers.example`;
@@ -42,6 +38,8 @@ const EVENTS: PastEvent[] = [
 ];
 
 // [event index, user (1-based), rating, text]
+const PAST_REGIONS = ["Kentucky, USA", "Kentucky, USA", "New Mexico, USA", "South Dakota, USA", "California, USA", "New Mexico, USA", "South Dakota, USA", "Kentucky, USA", "California, USA"];
+
 const REVIEWS: [number, number, number, string][] = [
   [0, 5, 5, "Perfect first cave trip. The guides paced it for everyone and the passage is enormous. Bring a light layer, it stays cool all day."],
   [0, 9, 4, "Great intro. I learned a lot about the cave's history, though the group was big enough that it was hard to hear at the back."],
@@ -106,18 +104,27 @@ async function main() {
   // Unusable password: random bytes hashed once and never revealed.
   const passwordHash = await bcrypt.hash(randomBytes(32).toString("hex"), 10);
 
-  await db.insert(users).values(
-    USERS.map(([name, grotto], i) => ({
-      id: uid(i + 1), name, email: email(name), passwordHash, grottoId: grotto, createdAt: at("2026-01-10T12:00:00Z"),
-    })),
+  // Clubs (worldwide), and regions for the two original ones.
+  await db.insert(tables.grottos).values(
+    NEW_CLUBS.map((c) => ({ id: c.id, name: c.name, region: c.region, description: c.description, meets: c.meets, imageSrc: PHOTOS[c.photo].src, imageAlt: PHOTOS[c.photo].alt })),
   ).onConflictDoNothing();
+  for (const [id, region] of Object.entries(CLUB_REGIONS)) await db.update(tables.grottos).set({ region }).where(sql`${tables.grottos.id} = ${id}`);
+
+  await db.insert(users).values(
+    USERS.map(([name, grotto, skillLevel, role], i) => ({
+      id: uid(i + 1), name, email: email(name), passwordHash, grottoId: grotto, skillLevel, role, createdAt: at("2026-01-10T12:00:00Z"),
+    })),
+  ).onConflictDoUpdate({
+    target: users.id,
+    set: { name: sql`excluded.name`, grottoId: sql`excluded.grotto_id`, skillLevel: sql`excluded.skill_level`, role: sql`excluded.role` },
+  });
 
   const eventId = (i: number) => `demo-e${i + 1}`;
   await db.insert(events).values(
     EVENTS.map((e, i) => ({
       id: eventId(i), title: e.title, description: e.description, caveName: e.cave, startsAt: at(e.date),
       durationHours: e.hours, difficulty: e.difficulty, capacity: e.capacity, imageSrc: PHOTOS[e.photo].src,
-      imageAlt: PHOTOS[e.photo].alt, hostId: uid(e.host), grottoId: e.grotto, createdAt: at("2026-01-20T12:00:00Z"),
+      imageAlt: PHOTOS[e.photo].alt, region: PAST_REGIONS[i], hostId: uid(e.host), grottoId: e.grotto, createdAt: at("2026-01-20T12:00:00Z"),
     })),
   ).onConflictDoNothing();
 
@@ -142,6 +149,56 @@ async function main() {
     })),
   ).onConflictDoNothing();
 
+  // Upcoming expeditions around the world, plus RSVPs for them and for the starter calendar.
+  await db.insert(events).values(
+    UPCOMING.map((e) => ({
+      id: e.id, title: e.title, description: e.description, caveName: e.cave, region: e.region, startsAt: at(e.date), durationHours: e.hours,
+      difficulty: e.difficulty, capacity: e.capacity, imageSrc: PHOTOS[e.photo].src, imageAlt: PHOTOS[e.photo].alt,
+      hostId: uid(e.host), grottoId: e.club, createdAt: at("2026-09-01T12:00:00Z"),
+    })),
+  ).onConflictDoNothing();
+  await db.update(events).set({ region: STARTER_REGION }).where(sql`${events.id} like 'evt-%' and ${events.region} is null`);
+
+  const upcomingRsvps = [
+    ...UPCOMING.flatMap((e) => [e.host, ...e.going].map((u) => ({ eventId: e.id, userId: uid(u), createdAt: at("2026-09-10T12:00:00Z") }))),
+    ...Object.entries(STARTER_GOING).flatMap(([eventId, us]) => us.map((u) => ({ eventId, userId: uid(u), createdAt: at("2026-09-12T12:00:00Z") }))),
+  ];
+  await db.insert(rsvps).values(upcomingRsvps).onConflictDoNothing();
+
+  await db.insert(grottoReviews).values(
+    NEW_CLUB_RATINGS.map(([club, u, rating, body], i) => ({
+      id: `demo-gr-${club}-${u}`, grottoId: club, userId: uid(u), rating, body, createdAt: at(`2026-09-${String(10 + i).padStart(2, "0")}T12:00:00Z`),
+    })),
+  ).onConflictDoNothing();
+
+  // Q&A: questions, answers, accepted answers and "helpful" votes (nobody votes for their own post).
+  const { questions, answers, helpfulVotes, gearReviews } = tables;
+  const nowMs = Date.now();
+  const voteRows: { targetType: "question" | "answer"; targetId: string; userId: string }[] = [];
+  for (const [qi, q] of QUESTIONS.entries()) {
+    const qid = `demo-q${qi + 1}`;
+    const asked = new Date(nowMs - q.daysAgo * DAY);
+    await db.insert(questions).values({ id: qid, title: q.title, body: q.body, tags: q.tags, authorId: uid(q.by), createdAt: asked }).onConflictDoNothing();
+    q.votes.filter((u) => u !== q.by).forEach((u) => voteRows.push({ targetType: "question", targetId: qid, userId: uid(u) }));
+
+    for (const [ai, a] of q.answers.entries()) {
+      const aid = `demo-a${qi + 1}-${ai + 1}`;
+      await db.insert(answers).values({ id: aid, questionId: qid, authorId: uid(a.by), body: a.body, createdAt: new Date(asked.getTime() + (ai + 1) * 5 * 3_600_000) }).onConflictDoNothing();
+      a.votes.filter((u) => u !== a.by).forEach((u) => voteRows.push({ targetType: "answer", targetId: aid, userId: uid(u) }));
+    }
+    if (q.accepted !== undefined) await db.update(questions).set({ acceptedAnswerId: `demo-a${qi + 1}-${q.accepted + 1}` }).where(sql`${questions.id} = ${qid}`);
+  }
+  await db.insert(helpfulVotes).values(voteRows).onConflictDoNothing();
+
+  await db.insert(gearReviews).values(
+    GEAR_REVIEWS.map(([slug, u, rating, body], i) => ({
+      id: `demo-g-${slug}-${u}`, gearSlug: slug, userId: uid(u), rating, body, createdAt: new Date(nowMs - (40 - i) * DAY),
+    })),
+  ).onConflictDoNothing();
+
+  const levels = Object.fromEntries(["beginner", "intermediate", "vertical", "rescue"].map((l) => [l, USERS.filter((u) => u[2] === l).length]));
+  console.log(`Members by level: ${JSON.stringify(levels)}; verified experts: ${USERS.filter((u) => u[3] === "expert").length}.`);
+  console.log(`Q&A: ${QUESTIONS.length} questions, ${QUESTIONS.reduce((n, q) => n + q.answers.length, 0)} answers, ${voteRows.length} helpful votes. Gear reviews: ${GEAR_REVIEWS.length}. New clubs: ${NEW_CLUBS.length}. Upcoming expeditions: ${UPCOMING.length}.`);
   console.log(`Demo data: ${USERS.length} members, ${EVENTS.length} past expeditions, ${rsvpRows.size} RSVPs, ${REVIEWS.length} reviews, ${GROTTO_REVIEWS.length} grotto ratings.`);
   process.exit(0);
 }
@@ -149,8 +206,10 @@ async function main() {
 async function unseed() {
   const db = getDb();
   await db.delete(tables.events).where(like(tables.events.id, "demo-e%"));
+  await db.delete(tables.events).where(like(tables.events.id, "demo-up%"));
   const removed = await db.delete(tables.users).where(like(tables.users.id, "demo-u%")).returning({ id: tables.users.id });
-  console.log(`Removed demo data (${removed.length} members; their reviews and RSVPs cascade).`);
+  for (const c of NEW_CLUBS) await db.delete(tables.grottos).where(sql`${tables.grottos.id} = ${c.id}`);
+  console.log(`Removed demo data (${removed.length} members; their questions, answers, votes, reviews and RSVPs cascade).`);
   process.exit(0);
 }
 

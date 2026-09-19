@@ -7,13 +7,16 @@ import { HeroActions } from "@/components/layout/HeroActions";
 import { DIFFICULTY_META } from "@/lib/data/difficulty";
 import { countMembers, listPastEvents, listUpcomingEvents } from "@/lib/services/events";
 import { listRecentReviews } from "@/lib/services/reviews";
+import { listQuestions } from "@/lib/services/qa";
+import { QuestionCard } from "@/components/domain/QuestionCard";
+import { GEAR_CATEGORIES, type GearCategory } from "@/lib/data/gear";
 import { formatShortDate } from "@/lib/format";
 import { Difficulty } from "@/types/domain";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [upcoming, members, past, recentReviews] = await Promise.all([listUpcomingEvents(), countMembers(), listPastEvents(3), listRecentReviews(6)]);
+  const [upcoming, members, past, recentReviews, questions] = await Promise.all([listUpcomingEvents(), countMembers(), listPastEvents(3), listRecentReviews(6), listQuestions(3)]);
   const next = upcoming[0];
 
   return (
@@ -87,6 +90,35 @@ export default async function HomePage() {
             <RecentReviews reviews={recentReviews} />
           </section>
         )}
+
+        <section className="mt-24" aria-labelledby="qa">
+          <div className="mb-8 flex items-end justify-between">
+            <div>
+              <h2 id="qa" className="font-display text-3xl font-semibold">Ask the community</h2>
+              <p className="mt-2 text-slate-400">Real questions from cavers, answered by people with experience. Readable by everyone.</p>
+            </div>
+            <Link href="/questions" className="text-sm font-medium text-amber-300 hover:text-amber-200">All questions &rarr;</Link>
+          </div>
+          <div className="space-y-4">{questions.map((q) => <QuestionCard key={q.id} question={q} />)}</div>
+        </section>
+
+        <section className="mt-24" aria-labelledby="gear">
+          <div className="mb-8 flex items-end justify-between">
+            <div>
+              <h2 id="gear" className="font-display text-3xl font-semibold">Know your gear</h2>
+              <p className="mt-2 text-slate-400">What to look for, what to avoid, and where to get it, with member reviews.</p>
+            </div>
+            <Link href="/gear" className="text-sm font-medium text-amber-300 hover:text-amber-200">All gear guides &rarr;</Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {(Object.keys(GEAR_CATEGORIES) as GearCategory[]).map((c) => (
+              <Link key={c} href={`/gear#cat-${c}`} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 transition hover:border-slate-600">
+                <p className="font-display text-lg font-semibold">{GEAR_CATEGORIES[c].label}</p>
+                <p className="mt-1 text-sm text-slate-400">{GEAR_CATEGORIES[c].blurb}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <section className="mt-24" aria-labelledby="levels">
           <h2 id="levels" className="font-display text-3xl font-semibold">Find your level</h2>

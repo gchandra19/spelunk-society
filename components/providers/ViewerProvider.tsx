@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Viewer } from "@/types/domain";
 
-const ANONYMOUS: Viewer = { user: null, rsvpIds: [], hostedIds: [] };
+const ANONYMOUS: Viewer = { user: null, rsvpIds: [], hostedIds: [], grottoId: null, voteKeys: [] };
 
 interface ViewerContextValue {
   viewer: Viewer;
@@ -12,6 +12,7 @@ interface ViewerContextValue {
   counts: Readonly<Record<string, number>>;
   refresh: () => Promise<void>;
   applyRsvp: (eventId: string, going: boolean, count: number) => void;
+  applyVote: (key: string, voted: boolean) => void;
 }
 
 const ViewerContext = createContext<ViewerContextValue | null>(null);
@@ -44,7 +45,11 @@ export function ViewerProvider({ children }: { children: React.ReactNode }) {
     setCounts((c) => ({ ...c, [eventId]: count }));
   }, []);
 
-  const value = useMemo(() => ({ viewer, loaded, counts, refresh, applyRsvp }), [viewer, loaded, counts, refresh, applyRsvp]);
+  const applyVote = useCallback((key: string, voted: boolean) => {
+    setViewer((v) => ({ ...v, voteKeys: voted ? [...new Set([...v.voteKeys, key])] : v.voteKeys.filter((k) => k !== key) }));
+  }, []);
+
+  const value = useMemo(() => ({ viewer, loaded, counts, refresh, applyRsvp, applyVote }), [viewer, loaded, counts, refresh, applyRsvp, applyVote]);
   return <ViewerContext.Provider value={value}>{children}</ViewerContext.Provider>;
 }
 

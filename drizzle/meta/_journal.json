@@ -15,6 +15,20 @@
       "when": 1789855890514,
       "tag": "0001_robust_true_believers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789859052100,
+      "tag": "0002_brown_toxin",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789859097115,
+      "tag": "0003_talented_marten_broadcloak",
+      "breakpoints": true
     }
   ]
 }

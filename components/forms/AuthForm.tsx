@@ -3,10 +3,13 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { RecoveryCodePanel } from "@/components/forms/RecoveryCodePanel";
+import { SKILL_LABELS } from "@/components/domain/MemberBadge";
 import { useViewer } from "@/components/providers/ViewerProvider";
-import { signInAction, signUpAction, type FormState } from "@/lib/actions/auth";
+import { signInAction, signUpAction, type CodeState } from "@/lib/actions/auth";
 import { checkField } from "@/lib/field-rules";
 import { Field, FormError, SubmitButton, fieldValue, inputClass } from "@/components/forms/Field";
+import type { SkillLevel } from "@/types/domain";
 
 interface AuthFormProps {
   readonly mode: "sign-in" | "sign-up";
@@ -18,23 +21,30 @@ type Errors = Partial<Record<string, string>>;
 
 export function AuthForm({ mode, next, grottos = [] }: AuthFormProps) {
   const isSignUp = mode === "sign-up";
-  const [state, action, pending] = useActionState<FormState, FormData>(isSignUp ? signUpAction : signInAction, null);
+  const [state, action, pending] = useActionState<CodeState, FormData>(isSignUp ? signUpAction : signInAction, null);
   const { refresh } = useViewer();
   const router = useRouter();
   const [errors, setErrors] = useState<Errors>({});
   const touched = useRef<Set<string>>(new Set());
   const fields = isSignUp ? ["name", "email", "password"] : ["email", "password"];
 
+  const finish = () => {
+    void refresh().then(() => {
+      router.push(next);
+      router.refresh();
+    });
+  };
+
   useEffect(() => {
-    if (state?.success) {
-      void refresh().then(() => {
-        router.push(next);
-        router.refresh();
-      });
-    } else if (state?.fieldErrors) {
-      setErrors((e) => ({ ...e, ...state.fieldErrors }));
-    }
-  }, [state, refresh, router, next]);
+    if (state?.success && !state.recoveryCode) finish();
+    else if (state && !state.success && state.fieldErrors) setErrors((e) => ({ ...e, ...state.fieldErrors }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
+
+  // After sign-up, the recovery code must be seen and acknowledged before continuing.
+  if (state?.success && state.recoveryCode) {
+    return <RecoveryCodePanel code={state.recoveryCode} continueLabel="Continue" onContinue={finish} />;
+  }
 
   const validate = (name: string, value: string) => setErrors((e) => ({ ...e, [name]: checkField(name, value, mode) ?? undefined }));
 
@@ -53,13 +63,13 @@ export function AuthForm({ mode, next, grottos = [] }: AuthFormProps) {
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const data = new FormData(e.currentTarget);
-    const next: Errors = {};
-    for (const f of fields) next[f] = checkField(f, String(data.get(f) ?? ""), mode) ?? undefined;
-    if (Object.values(next).some(Boolean)) {
+    const found: Errors = {};
+    for (const f of fields) found[f] = checkField(f, String(data.get(f) ?? ""), mode) ?? undefined;
+    if (Object.values(found).some(Boolean)) {
       e.preventDefault();
-      setErrors(next);
+      setErrors(found);
       fields.forEach((f) => touched.current.add(f));
-      (e.currentTarget.elements.namedItem(fields.find((f) => next[f])!) as HTMLElement | null)?.focus();
+      (e.currentTarget.elements.namedItem(fields.find((f) => found[f])!) as HTMLElement | null)?.focus();
     }
   };
 
@@ -78,18 +88,28 @@ export function AuthForm({ mode, next, grottos = [] }: AuthFormProps) {
       <Field label="Password" name="password" error={errors.password} hint={isSignUp ? "At least 10 characters." : undefined}>
         <input id="password" name="password" type="password" autoComplete={isSignUp ? "new-password" : "current-password"} required maxLength={72} className={inputClass} {...bind("password")} />
       </Field>
-      {isSignUp && grottos.length > 0 && (
-        <Field label="Your grotto (optional)" name="grottoId">
-          <select id="grottoId" name="grottoId" defaultValue={fieldValue(state, "grottoId") ?? ""} className={inputClass}>
-            <option value="">No grotto yet</option>
-            {grottos.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-          </select>
-        </Field>
+      {isSignUp && (
+        <>
+          <Field label="Your caving experience" name="skillLevel" hint="Shown next to your posts. You can change it later.">
+            <select id="skillLevel" name="skillLevel" defaultValue={fieldValue(state, "skillLevel") ?? "beginner"} className={inputClass}>
+              {(Object.keys(SKILL_LABELS) as SkillLevel[]).map((l) => <option key={l} value={l}>{SKILL_LABELS[l]}</option>)}
+            </select>
+          </Field>
+          {grottos.length > 0 && (
+            <Field label="Your club (optional)" name="grottoId">
+              <select id="grottoId" name="grottoId" defaultValue={fieldValue(state, "grottoId") ?? ""} className={inputClass}>
+                <option value="">No club yet</option>
+                {grottos.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+              </select>
+            </Field>
+          )}
+        </>
       )}
 
       <FormError state={state} />
       <SubmitButton pending={pending || Boolean(state?.success)}>{isSignUp ? "Create account" : "Sign in"}</SubmitButton>
 
+      {!isSignUp && <p className="text-center text-sm"><Link href="/forgot-password" className="text-slate-400 hover:text-white">Forgot your password?</Link></p>}
       <p className="text-center text-sm text-slate-400">
         {isSignUp ? "Already a member?" : "New here?"}{" "}
         <Link href={`${other}?next=${encodeURIComponent(next)}`} className="font-medium text-amber-300 hover:text-amber-200">

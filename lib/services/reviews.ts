@@ -4,12 +4,11 @@ import type { RecentReview, Review } from "@/types/domain";
 
 const { reviews, users, events, rsvps } = tables;
 
+const author = { authorName: users.name, authorLevel: users.skillLevel, authorRole: users.role };
+
 export async function listReviews(eventId: string): Promise<Review[]> {
   const rows = await getDb()
-    .select({
-      id: reviews.id, eventId: reviews.eventId, userId: reviews.userId, authorName: users.name,
-      rating: reviews.rating, body: reviews.body, createdAt: reviews.createdAt,
-    })
+    .select({ id: reviews.id, userId: reviews.userId, ...author, rating: reviews.rating, body: reviews.body, createdAt: reviews.createdAt })
     .from(reviews)
     .innerJoin(users, eq(users.id, reviews.userId))
     .where(eq(reviews.eventId, eventId))
@@ -22,8 +21,8 @@ export async function listReviews(eventId: string): Promise<Review[]> {
 export async function listRecentReviews(limit = 6): Promise<RecentReview[]> {
   const rows = await getDb()
     .select({
-      id: reviews.id, eventId: reviews.eventId, userId: reviews.userId, authorName: users.name, rating: reviews.rating,
-      body: reviews.body, createdAt: reviews.createdAt, eventTitle: events.title,
+      id: reviews.id, userId: reviews.userId, ...author, rating: reviews.rating, body: reviews.body,
+      createdAt: reviews.createdAt, eventId: reviews.eventId, eventTitle: events.title,
     })
     .from(reviews)
     .innerJoin(users, eq(users.id, reviews.userId))

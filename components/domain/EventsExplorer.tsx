@@ -36,7 +36,7 @@ export function EventsExplorer({ upcoming, past }: Props) {
       (e) =>
         (filter === "All" || e.difficulty === filter) &&
         (!onlyMine || going.includes(e.id)) &&
-        (!q || `${e.title} ${e.caveName} ${e.hostedBy} ${e.description}`.toLowerCase().includes(q)),
+        (!q || `${e.title} ${e.caveName} ${e.region ?? ""} ${e.hostedBy} ${e.description}`.toLowerCase().includes(q)),
     );
   }, [list, query, filter, onlyMine, going]);
 
@@ -56,7 +56,7 @@ export function EventsExplorer({ upcoming, past }: Props) {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name, cave or grotto"
+              placeholder="Search by name, cave, country or club"
               className="w-full rounded-xl border border-slate-800 bg-slate-900 py-2.5 pl-10 pr-4 text-sm placeholder:text-slate-500 focus:border-amber-400 focus:outline-none"
             />
           </label>
