@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { EventCard } from "@/components/domain/EventCard";
@@ -21,6 +21,12 @@ export function EventsExplorer({ upcoming, past }: Props) {
   const [filter, setFilter] = useState<Filter>("All");
   const [onlyMine, setOnlyMine] = useState(false);
   const { viewer } = useViewer();
+
+  // /events#past opens the Past tab directly (kept out of the query string so the page stays cacheable).
+  useEffect(() => {
+    if (window.location.hash === "#past") setTab("past");
+  }, []);
+
   const going = viewer.rsvpIds;
 
   const list = tab === "upcoming" ? upcoming : past;
@@ -63,7 +69,7 @@ export function EventsExplorer({ upcoming, past }: Props) {
             {(["upcoming", "past"] as const).map((t) => (
               <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
                 className={`rounded-full px-4 py-1 text-sm font-medium capitalize transition ${tab === t ? "bg-slate-600 text-white" : "text-slate-400 hover:text-white"}`}>
-                {t}
+                {t} <span className="opacity-60">({t === "upcoming" ? upcoming.length : past.length})</span>
               </button>
             ))}
           </div>

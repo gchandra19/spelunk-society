@@ -2,16 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { CalendarDays, Users } from "lucide-react";
 import { EventCard } from "@/components/domain/EventCard";
+import { RecentReviews } from "@/components/domain/RecentReviews";
 import { HeroActions } from "@/components/layout/HeroActions";
 import { DIFFICULTY_META } from "@/lib/data/difficulty";
-import { countMembers, listUpcomingEvents } from "@/lib/services/events";
+import { countMembers, listPastEvents, listUpcomingEvents } from "@/lib/services/events";
+import { listRecentReviews } from "@/lib/services/reviews";
 import { formatShortDate } from "@/lib/format";
 import { Difficulty } from "@/types/domain";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [upcoming, members] = await Promise.all([listUpcomingEvents(), countMembers()]);
+  const [upcoming, members, past, recentReviews] = await Promise.all([listUpcomingEvents(), countMembers(), listPastEvents(3), listRecentReviews(6)]);
   const next = upcoming[0];
 
   return (
@@ -62,6 +64,29 @@ export default async function HomePage() {
             </div>
           )}
         </section>
+
+        {past.length > 0 && (
+          <section className="mt-24" aria-labelledby="recent">
+            <div className="mb-8 flex items-end justify-between">
+              <div>
+                <h2 id="recent" className="font-display text-3xl font-semibold">Recently completed</h2>
+                <p className="mt-2 text-slate-400">See how past expeditions went. No account needed.</p>
+              </div>
+              <Link href="/events#past" className="text-sm font-medium text-amber-300 hover:text-amber-200">All past expeditions &rarr;</Link>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {past.map((event) => <EventCard key={event.id} event={event} />)}
+            </div>
+          </section>
+        )}
+
+        {recentReviews.length > 0 && (
+          <section className="mt-24" aria-labelledby="reviews">
+            <h2 id="reviews" className="font-display text-3xl font-semibold">What members say</h2>
+            <p className="mb-8 mt-2 text-slate-400">Honest reviews from people who joined.</p>
+            <RecentReviews reviews={recentReviews} />
+          </section>
+        )}
 
         <section className="mt-24" aria-labelledby="levels">
           <h2 id="levels" className="font-display text-3xl font-semibold">Find your level</h2>

@@ -34,6 +34,8 @@ export interface CavingEvent {
   readonly difficulty: Difficulty;
   readonly rsvpCount: number; // everyone going, including the viewer if they RSVP'd
   readonly capacity: number;
+  readonly reviewCount: number;
+  readonly ratingAverage: number | null;
   readonly status: "published" | "cancelled";
   readonly image: Photo;
 }
@@ -62,6 +64,10 @@ export interface ContactMessage {
   readonly email: string;
   readonly message: string;
   readonly createdAt: string;
+}
+
+export interface RecentReview extends Review {
+  readonly eventTitle: string;
 }
 
 export interface SessionUser {

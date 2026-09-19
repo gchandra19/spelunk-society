@@ -1,6 +1,6 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { getDb, tables } from "@/lib/db";
-import type { Review } from "@/types/domain";
+import type { RecentReview, Review } from "@/types/domain";
 
 const { reviews, users, events, rsvps } = tables;
 
@@ -15,6 +15,22 @@ export async function listReviews(eventId: string): Promise<Review[]> {
     .where(eq(reviews.eventId, eventId))
     .orderBy(desc(reviews.createdAt))
     .limit(100);
+  return rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }));
+}
+
+/** Latest reviews across all finished expeditions, for the public home page. */
+export async function listRecentReviews(limit = 6): Promise<RecentReview[]> {
+  const rows = await getDb()
+    .select({
+      id: reviews.id, eventId: reviews.eventId, userId: reviews.userId, authorName: users.name, rating: reviews.rating,
+      body: reviews.body, createdAt: reviews.createdAt, eventTitle: events.title,
+    })
+    .from(reviews)
+    .innerJoin(users, eq(users.id, reviews.userId))
+    .innerJoin(events, eq(events.id, reviews.eventId))
+    .where(eq(events.status, "published"))
+    .orderBy(desc(reviews.createdAt))
+    .limit(limit);
   return rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }));
 }
 

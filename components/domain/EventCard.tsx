@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Clock, MapPin } from "lucide-react";
+import { Clock, MapPin, Star } from "lucide-react";
 import { DifficultyBadge } from "@/components/domain/DifficultyBadge";
 import { RSVPControl } from "@/components/domain/RSVPControl";
 import { formatDay, formatMonth, formatTime } from "@/lib/format";
@@ -37,6 +37,14 @@ export function EventCard({ event }: { readonly event: CavingEvent }) {
           </h3>
           <p className="mt-1 line-clamp-2 text-sm text-slate-400">{event.description}</p>
         </div>
+
+        {event.ratingAverage !== null && (
+          <p className="flex items-center gap-1.5 text-sm" aria-label={`Rated ${event.ratingAverage} out of 5 from ${event.reviewCount} reviews`}>
+            <Star size={15} className="fill-amber-400 text-amber-400" aria-hidden />
+            <span className="font-semibold">{event.ratingAverage.toFixed(1)}</span>
+            <span className="text-slate-500">({event.reviewCount} review{event.reviewCount === 1 ? "" : "s"})</span>
+          </p>
+        )}
 
         <ul className="space-y-1 text-sm text-slate-300">
           <li className="flex items-center gap-2"><MapPin size={15} className="text-slate-500" aria-hidden />{event.caveName}</li>

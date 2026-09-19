@@ -2,9 +2,13 @@ import { and, asc, count, desc, eq, gt, gte, lt, sql } from "drizzle-orm";
 import { getDb, tables } from "@/lib/db";
 import type { CavingEvent, Difficulty } from "@/types/domain";
 
-const { events, rsvps, users, grottos } = tables;
+const { events, rsvps, users, grottos, reviews } = tables;
 
 const rsvpCount = sql<number>`(select count(*)::int from ${rsvps} where ${rsvps.eventId} = ${events.id})`;
+
+// Qualified on purpose: this query joins tables that all have an "id" column.
+const reviewCount = sql<number>`(select count(*)::int from ${reviews} where ${reviews.eventId} = "events"."id")`;
+const ratingAverage = sql<string | null>`(select round(avg(rating)::numeric, 1) from ${reviews} where ${reviews.eventId} = "events"."id")`;
 
 const eventSelect = {
   id: events.id,
@@ -22,12 +26,15 @@ const eventSelect = {
   hostUser: users.name,
   grottoName: grottos.name,
   rsvpCount,
+  reviewCount,
+  ratingAverage,
 };
 
 type Row = {
   id: string; title: string; description: string; caveName: string; startsAt: Date; durationHours: number;
   difficulty: Difficulty; capacity: number; status: "published" | "cancelled"; imageSrc: string; imageAlt: string;
   hostId: string | null; hostUser: string | null; grottoName: string | null; rsvpCount: number;
+  reviewCount: number; ratingAverage: string | null;
 };
 
 const toEvent = (r: Row): CavingEvent => ({
@@ -42,6 +49,8 @@ const toEvent = (r: Row): CavingEvent => ({
   difficulty: r.difficulty,
   rsvpCount: Number(r.rsvpCount),
   capacity: r.capacity,
+  reviewCount: Number(r.reviewCount),
+  ratingAverage: r.ratingAverage === null ? null : Number(r.ratingAverage),
   status: r.status,
   image: { src: r.imageSrc, alt: r.imageAlt },
 });
