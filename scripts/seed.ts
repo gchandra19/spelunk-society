@@ -1,7 +1,8 @@
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
-import { PHOTOS, SEED_EVENTS } from "../lib/data/events";
+import { SEED_EVENTS } from "../lib/data/events";
+import { PHOTOS } from "../lib/data/photos";
 import { SEED_GROTTOS } from "../lib/data/grottos";
 import { getDb, tables } from "../lib/db";
 

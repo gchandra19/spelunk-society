@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PHOTO_KEYS } from "@/lib/data/events";
+import { PHOTO_KEYS } from "@/lib/data/photos";
 
 export const signUpSchema = z.object({
   name: z.string().trim().min(2, "Enter your name").max(60),
@@ -54,3 +54,16 @@ export function submitted(formData: FormData): Record<string, string> {
 /** Only allow same-site relative redirects. */
 export const safeNext = (next: string | null | undefined): string =>
   next && next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? next : "/events";
+
+export const grottoReviewSchema = z.object({
+  grottoId: z.string().min(1).max(50),
+  rating: z.coerce.number().int().min(1, "Choose a rating").max(5),
+  body: z.string().trim().min(10, "Write at least 10 characters").max(1000),
+});
+
+export const contactSchema = z.object({
+  name: z.string().trim().min(2, "Enter your name").max(80),
+  email: z.string().trim().toLowerCase().email("Enter a valid email address").max(254),
+  message: z.string().trim().min(10, "Write at least 10 characters").max(3000),
+  website: z.string().max(0).optional(), // honeypot: real people leave this hidden field empty
+});

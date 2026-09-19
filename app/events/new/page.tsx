@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { CreateEventForm } from "@/components/forms/CreateEventForm";
-import { listGrottos } from "@/lib/services/events";
+import { listGrottos } from "@/lib/services/grottos";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Host an expedition" };

@@ -94,3 +94,28 @@ export const rateLimits = pgTable("rate_limits", {
   count: integer("count").notNull(),
   windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
 });
+
+export const grottoReviews = pgTable(
+  "grotto_reviews",
+  {
+    id: id(),
+    grottoId: text("grotto_id").notNull().references(() => grottos.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    rating: smallint("rating").notNull(),
+    body: text("body").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("grotto_reviews_grotto_user_uq").on(t.grottoId, t.userId),
+    check("grotto_reviews_rating_ck", sql`${t.rating} between 1 and 5`),
+  ],
+);
+
+export const contactMessages = pgTable("contact_messages", {
+  id: id(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  message: text("message").notNull(),
+  userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: createdAt(),
+});

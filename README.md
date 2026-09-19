@@ -1,39 +1,62 @@
+# The Spelunkers Society
 
-# 🦇 The Spelunkers Society (Grotto Hub)
+A community site for caving clubs: find expeditions, RSVP, host your own, and review the ones you joined.
 
-Welcome to **The Spelunkers Society**, a lightweight, serverless community bulletin board designed specifically for caving clubs, expeditions, and training organizations. 
+**Live site:** https://spelunk-society.vercel.app
 
-This is a personal hobby project built to explore full-stack development, serverless architectures, and next-generation autonomous AI workflows.
+## Features
 
-## 🚀 MVP Features
-- **Event Feed:** A public bulletin board tracking upcoming cave cleanups, vertical training days, and club meetings.
-- **Organization Profiles:** Basic landing pages for local caving groups ("Grottos") to share details.
-- **RSVP Tracker:** Simple interactive tracking for team leaders to see attendance counts before an event.
+**Expeditions**
+- Browse upcoming and past expeditions. Search, and filter by difficulty (Beginner, Vertical, Rescue).
+- Each expedition shows the cave, date and time (UTC), duration, host grotto, what to expect and what to bring.
+- One-tap RSVP with a live capacity bar. The count updates instantly and never overbooks, even when several people grab the last spot at once.
+- Add an expedition to your calendar (`.ics`) or share its link.
+- **Host your own:** any member can publish an expedition with a cover photo, capacity and difficulty, and cancel it later.
+- **My Expeditions:** everything you're going to or hosting.
 
-## 🛠️ Tech Stack & Architecture
-- **Framework:** Next.js (App Router, TypeScript)
-- **Styling:** Tailwind CSS (with Lucide React icons)
-- **Database:** Neon Postgres via Drizzle ORM (schema in `lib/db/schema.ts`, migrations in `drizzle/`)
-- **Auth:** Email + password with hashed sessions (`lib/session.ts`, `lib/services/users.ts`)
-- **Hosting:** Vercel
-- **Development Tool:** Claude Code (Autonomous CLI Agent workflow)
+**Reviews and ratings**
+- After an expedition ends, people who joined it can leave a star rating and a written review. One review each, editable.
+- Members of a grotto, and people who joined its expeditions, can rate the grotto.
 
-## 💻 Local development
+**Community**
+- Member accounts (email and password) with optional grotto membership.
+- Grotto directory with member counts, meeting times and ratings.
+- Contact form for questions and feedback.
+
+## Quick start
+
+Requires Node 20+ and a Postgres database ([Neon](https://neon.tech) free tier works).
+
 ```bash
 npm install
-cp .env.example .env.local     # then paste your Neon connection string
-npm run db:migrate             # create tables
-npm run db:seed                # starter grottos and events
-npm run dev
+cp .env.example .env.local     # add your DATABASE_URL
+npm run db:migrate             # create the tables
+npm run db:seed                # starter grottos and upcoming expeditions
+npm run db:seed:demo           # optional: fictional members, past expeditions and reviews
+npm run dev                    # http://localhost:3000
 ```
-Other scripts: `npm run db:generate` (after editing the schema), `npm run db:test` (service checks against the database), `npm run e2e` (browser test; needs `npm run build && npm start` running).
 
-## ☁️ Deploying to Vercel
-1. Push to GitHub and import the repo in Vercel.
-2. Add the environment variable `DATABASE_URL` (your Neon **pooled** connection string) for Production and Preview.
-3. Deploy. Run `npm run db:migrate` whenever the schema changes, before deploying the code that needs it.
+| Script | What it does |
+| --- | --- |
+| `npm run build` / `npm start` | Production build and server |
+| `npm run db:generate` | Create a migration after editing `lib/db/schema.ts` |
+| `npm run db:migrate` | Apply migrations |
+| `npm run db:test` | Business-logic checks against the database |
+| `npm run e2e` | Browser test of the main flows (needs `npm run build && npm start` running) |
+| `npm run make-admin -- you@example.com` | Grant an account access to `/admin/messages` |
+| `npm run db:unseed:demo` | Remove the demo content |
 
-Use a separate Neon branch for Preview deployments so pull requests never touch production data.
+## Deploying
 
----
-*Note: This project is a sandboxed personal development environment built completely without a local host footprint.*
+Import the repo in Vercel, set `DATABASE_URL` (Neon pooled connection string), and deploy. Run `npm run db:migrate` before deploying code that changes the schema. See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
+
+## Documentation
+
+- [ARCHITECTURE.md](ARCHITECTURE.md): stack, data model, how it works
+- [CONTRIBUTING.md](CONTRIBUTING.md): how to contribute
+- [SECURITY.md](SECURITY.md): reporting a vulnerability
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+
+## License
+
+[MIT](LICENSE). Photos come from Wikimedia Commons and are credited in the site footer.

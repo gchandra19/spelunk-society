@@ -6,6 +6,7 @@ import { getDb, tables } from "../lib/db";
 import { allow } from "../lib/services/rate-limit";
 import { createEvent, getEvent, toggleRsvp } from "../lib/services/events";
 import { listReviews, submitReview } from "../lib/services/reviews";
+import { listGrottos, rateGrotto } from "../lib/services/grottos";
 import { createSession, createUser, deleteSession, getUserBySessionToken, verifyCredentials } from "../lib/services/users";
 
 let failures = 0;
@@ -75,6 +76,16 @@ async function main() {
   const reviews = await listReviews(past.id);
   check("one review per person, editable", reviews.length === 1 && reviews[0].rating === 3 && reviews[0].body === "Edited");
 
+  // --- grotto ratings ---
+  await db.insert(tables.grottos).values({ id: `${tag}-g`, name: `${tag} Grotto`, region: "x", description: "x", meets: "x", imageSrc: "/images/hero-squeeze.jpg", imageAlt: "t" });
+  await db.update(tables.events).set({ grottoId: `${tag}-g` }).where(eq(tables.events.id, past.id));
+  check("stranger cannot rate a grotto", !(await rateGrotto(ids[3], `${tag}-g`, 5, "Never been there")).ok);
+  check("someone who joined a past expedition can rate it", (await rateGrotto(ids[1], `${tag}-g`, 4, "Good people, good trips")).ok);
+  await db.update(tables.users).set({ grottoId: `${tag}-g` }).where(eq(tables.users.id, ids[3]));
+  check("a member can rate their grotto", (await rateGrotto(ids[3], `${tag}-g`, 2, "Could be better")).ok);
+  const mine = (await listGrottos()).find((g) => g.id === `${tag}-g`)!;
+  check("grotto average and counts are correct", mine.ratingCount === 2 && mine.ratingAverage === 3 && mine.memberCount === 1, JSON.stringify([mine.ratingCount, mine.ratingAverage, mine.memberCount]));
+
   // --- rate limiter ---
   const key = `${tag}:limit`;
   const attempts = [];
@@ -84,6 +95,7 @@ async function main() {
   // --- cleanup ---
   await db.delete(tables.events).where(inArray(tables.events.id, [eventId, past.id]));
   await db.delete(tables.users).where(inArray(tables.users.id, ids));
+  await db.delete(tables.grottos).where(eq(tables.grottos.id, `${tag}-g`));
   await db.delete(tables.rateLimits).where(eq(tables.rateLimits.key, key));
 
   console.log(failures ? `\n${failures} FAILED` : "\nAll checks passed.");

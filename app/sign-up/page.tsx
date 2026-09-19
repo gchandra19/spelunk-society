@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AuthForm } from "@/components/forms/AuthForm";
-import { listGrottos } from "@/lib/services/events";
+import { listGrottos } from "@/lib/services/grottos";
 import { safeNext } from "@/lib/validation";
 
 export const metadata: Metadata = { title: "Join the Society" };

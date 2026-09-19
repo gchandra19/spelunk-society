@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useViewer } from "@/components/providers/ViewerProvider";
 import { createEventAction } from "@/lib/actions/events";
 import type { FormState } from "@/lib/actions/auth";
-import { PHOTOS } from "@/lib/data/events";
+import { PHOTOS } from "@/lib/data/photos";
 import { Field, FormError, SubmitButton, fieldError, fieldValue, inputClass } from "@/components/forms/Field";
 
 type State = (FormState & { eventId?: string }) | null;

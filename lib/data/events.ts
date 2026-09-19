@@ -1,15 +1,5 @@
-import type { Difficulty, Photo } from "@/types/domain";
-
-export const PHOTOS = {
-  squeeze: { src: "/images/hero-squeeze.jpg", alt: "A caver in a red helmet squeezing through a narrow, mineral-coated passage" },
-  passage: { src: "/images/beginner-passage.jpg", alt: "A caver in a yellow helmet crawling through a low cave passage" },
-  rescue: { src: "/images/rescue-jewel.jpg", alt: "Two rescue team members in helmets and respirators checking gas monitors underground" },
-  rope: { src: "/images/vertical-rope.jpg", alt: "A caver descending a single rope through a dark shaft, lit by their headlamp" },
-  group: { src: "/images/grotto-members.jpg", alt: "Eight grotto members in caving gear posing at a lava-rock cave entrance" },
-} as const satisfies Record<string, Photo>;
-
-export type PhotoKey = keyof typeof PHOTOS;
-export const PHOTO_KEYS = Object.keys(PHOTOS) as [PhotoKey, ...PhotoKey[]];
+import type { PhotoKey } from "@/lib/data/photos";
+import type { Difficulty } from "@/types/domain";
 
 export interface SeedEvent {
   id: string;

@@ -1,11 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Star } from "lucide-react";
 import { useViewer } from "@/components/providers/ViewerProvider";
 import { submitReviewAction } from "@/lib/actions/reviews";
 import type { FormState } from "@/lib/actions/auth";
 import { Field, FormError, SubmitButton, fieldError, fieldValue, inputClass } from "@/components/forms/Field";
+import { StarInput } from "@/components/forms/StarInput";
 
 export function ReviewForm({ eventId }: { readonly eventId: string }) {
   const { viewer } = useViewer();
@@ -20,13 +20,7 @@ export function ReviewForm({ eventId }: { readonly eventId: string }) {
       <input type="hidden" name="eventId" value={eventId} />
       <input type="hidden" name="rating" value={rating || ""} />
 
-      <div className="mt-4 flex gap-1" role="radiogroup" aria-label="Rating">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button key={n} type="button" role="radio" aria-checked={rating === n} aria-label={`${n} star${n > 1 ? "s" : ""}`} onClick={() => setRating(n)} className="rounded p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-            <Star size={28} className={n <= rating ? "fill-amber-400 text-amber-400" : "text-slate-600"} />
-          </button>
-        ))}
-      </div>
+      <div className="mt-4"><StarInput value={rating} onChange={setRating} /></div>
       {fieldError(state, "rating") && <p className="mt-1 text-xs text-rose-400">{fieldError(state, "rating")}</p>}
 
       <div className="mt-4">

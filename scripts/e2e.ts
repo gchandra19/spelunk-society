@@ -32,6 +32,13 @@ async function main() {
   await page.goto(`${BASE}/sign-up?next=/events/evt-2`);
   await page.fill("#name", "E2E Tester");
   await page.fill("#email", email);
+  await page.fill("#email", "not-an-email");
+  await page.locator("#email").blur();
+  await page.getByText("Enter a valid email address").waitFor();
+  check("invalid email is flagged on blur, before submitting", true);
+  await page.fill("#email", email);
+  await page.getByText("Enter a valid email address").waitFor({ state: "hidden" });
+  check("email error clears as soon as it is fixed", true);
   await page.fill("#password", "short");
   await page.getByRole("button", { name: /create account/i }).click();
   await page.getByText("Use at least 10 characters").waitFor();
@@ -60,6 +67,30 @@ async function main() {
   await page.goto(`${BASE}/my-expeditions`);
   await page.getByRole("heading", { name: /you.re going/i }).waitFor();
   check("My Expeditions lists it", true);
+
+  // home hero: no "Become a member" for a signed-in user
+  await page.goto(`${BASE}/`);
+  await page.getByRole("link", { name: /host an expedition/i }).first().waitFor();
+  check("signed-in home page hides 'Become a member'", (await page.getByRole("link", { name: /become a member/i }).count()) === 0);
+
+  // contact form
+  await page.goto(`${BASE}/contact`);
+  await page.fill("#name", "E2E Tester");
+  await page.fill("#email", email);
+  await page.fill("#message", "Automated test message, please ignore.");
+  await page.getByRole("button", { name: /send message/i }).click();
+  await page.getByText("Message sent").waitFor();
+  check("contact form sends a message", true);
+
+  // grotto ratings and past-expedition reviews (demo data)
+  await page.goto(`${BASE}/grottos`);
+  await page.getByText(/\d+ ratings?/).first().waitFor();
+  check("grottos show average ratings", true);
+  await page.goto(`${BASE}/events/demo-e1`);
+  await page.getByRole("heading", { name: "Reviews" }).waitFor();
+  await page.getByText("Perfect first cave trip").waitFor();
+  check("past expedition shows member reviews", true);
+  check("non-attendee sees no review form", (await page.getByRole("heading", { name: /how was it/i }).count()) === 0);
 
   // host an expedition
   await page.goto(`${BASE}/events/new`);
@@ -100,6 +131,7 @@ async function main() {
   // cleanup
   const db = getDb();
   await db.delete(tables.events).where(or(eq(tables.events.title, "E2E hosted expedition")));
+  await db.delete(tables.contactMessages).where(like(tables.contactMessages.email, "e2e-%@example.com"));
   await db.delete(tables.users).where(like(tables.users.email, "e2e-%@example.com"));
 
   console.log(failures ? `\n${failures} FAILED` : "\nAll e2e checks passed.");

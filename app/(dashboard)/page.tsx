@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Users } from "lucide-react";
+import { CalendarDays, Users } from "lucide-react";
 import { EventCard } from "@/components/domain/EventCard";
+import { HeroActions } from "@/components/layout/HeroActions";
 import { DIFFICULTY_META } from "@/lib/data/difficulty";
 import { countMembers, listUpcomingEvents } from "@/lib/services/events";
 import { formatShortDate } from "@/lib/format";
@@ -25,12 +26,7 @@ export default async function HomePage() {
           <p className="mt-6 max-w-xl text-lg text-slate-300">
             Join expeditions, host your own, and share what you found. Workshops, wild caving trips and rescue drills led by experienced grotto members.
           </p>
-          <div className="mt-9 flex flex-wrap gap-3">
-            <Link href="/events" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-300">
-              Browse expeditions <ArrowRight size={18} aria-hidden />
-            </Link>
-            <Link href="/sign-up" className="rounded-xl border border-slate-600 px-6 py-3 font-semibold transition hover:bg-slate-800/70">Become a member</Link>
-          </div>
+          <HeroActions />
         </div>
       </section>
 

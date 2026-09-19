@@ -11,7 +11,10 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx scripts/seed.ts",
     "db:test": "tsx scripts/integration-test.ts",
-    "e2e": "tsx scripts/e2e.ts"
+    "e2e": "tsx scripts/e2e.ts",
+    "make-admin": "tsx scripts/make-admin.ts",
+    "db:seed:demo": "tsx scripts/seed-demo.ts",
+    "db:unseed:demo": "tsx scripts/seed-demo.ts --remove"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

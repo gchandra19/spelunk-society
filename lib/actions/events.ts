@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { PHOTOS } from "@/lib/data/events";
+import { PHOTOS } from "@/lib/data/photos";
 import { cancelEvent, createEvent, toggleRsvp } from "@/lib/services/events";
 import { allow } from "@/lib/services/rate-limit";
 import { getCurrentUser } from "@/lib/session";

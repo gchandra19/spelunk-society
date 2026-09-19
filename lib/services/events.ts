@@ -1,6 +1,6 @@
 import { and, asc, count, desc, eq, gt, gte, lt, sql } from "drizzle-orm";
 import { getDb, tables } from "@/lib/db";
-import type { CavingEvent, Difficulty, Grotto } from "@/types/domain";
+import type { CavingEvent, Difficulty } from "@/types/domain";
 
 const { events, rsvps, users, grottos } = tables;
 
@@ -71,21 +71,6 @@ export async function getViewerRsvpAndHostedIds(userId: string) {
     db.select({ id: events.id }).from(events).where(eq(events.hostId, userId)),
   ]);
   return { rsvpIds: going.map((r) => r.id), hostedIds: hosted.map((r) => r.id) };
-}
-
-export async function listGrottos(): Promise<Grotto[]> {
-  const rows = await getDb()
-    .select({
-      id: grottos.id, name: grottos.name, region: grottos.region, description: grottos.description, meets: grottos.meets,
-      imageSrc: grottos.imageSrc, imageAlt: grottos.imageAlt,
-      memberCount: sql<number>`(select count(*)::int from ${users} where ${users.grottoId} = ${grottos.id})`,
-    })
-    .from(grottos)
-    .orderBy(asc(grottos.name));
-  return rows.map((g) => ({
-    id: g.id, name: g.name, region: g.region, description: g.description, meets: g.meets,
-    memberCount: Number(g.memberCount), image: { src: g.imageSrc, alt: g.imageAlt },
-  }));
 }
 
 export async function countMembers(): Promise<number> {

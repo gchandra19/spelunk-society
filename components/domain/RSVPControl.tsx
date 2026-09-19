@@ -76,9 +76,11 @@ export function RSVPControl({ eventId, rsvpCount, capacity, state = "open", vari
         className={`relative z-10 flex w-full items-center justify-center gap-2 rounded-xl font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 disabled:cursor-not-allowed disabled:opacity-60 ${
           variant === "full" ? "px-5 py-3 text-base" : "px-4 py-2.5 text-sm"
         } ${
-          optimistic.going
-            ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/40 hover:bg-emerald-500/25"
-            : "bg-amber-400 text-slate-950 hover:bg-amber-300"
+          closed
+            ? "bg-slate-800 text-slate-400"
+            : optimistic.going
+              ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/40 hover:bg-emerald-500/25"
+              : "bg-amber-400 text-slate-950 hover:bg-amber-300"
         }`}
       >
         {isPending && <Loader2 size={16} className="animate-spin" aria-hidden />}

@@ -1,12 +1,6 @@
 import Link from "next/link";
 import { Mountain } from "lucide-react";
-
-const CREDITS = [
-  ["Squeeze and passage photos", "U.S. National Park Service, public domain"],
-  ["Rope descent photo", "Carlsbad Caverns NPS, public domain"],
-  ["Rescue photo", "Staff Sgt. Theanne Herrmann, SD National Guard, public domain"],
-  ["Grotto members photo", "Leitmotiv, CC BY-SA 4.0"],
-] as const;
+import { PHOTO_CREDITS } from "@/lib/data/photos";
 
 export function SiteFooter() {
   return (
@@ -15,18 +9,20 @@ export function SiteFooter() {
         <div>
           <p className="flex items-center gap-2 font-display text-lg font-semibold"><Mountain size={20} className="text-amber-400" aria-hidden />The Spelunkers Society</p>
           <p className="mt-3 max-w-sm text-sm text-slate-400">
-            Grotto calendar and expedition coordinator. Leave nothing but footprints, take nothing but photographs.
+            Find, host and review caving expeditions. Leave nothing but footprints, take nothing but photographs.
           </p>
-          <ul className="mt-5 flex gap-5 text-sm text-slate-300">
+          <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-300">
             <li><Link href="/events" className="hover:text-white">Expeditions</Link></li>
             <li><Link href="/grottos" className="hover:text-white">Grottos</Link></li>
             <li><Link href="/my-expeditions" className="hover:text-white">My Expeditions</Link></li>
+            <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
+            <li><a href="https://github.com/gchandra19/spelunk-society" className="hover:text-white">Source on GitHub</a></li>
           </ul>
         </div>
         <div>
           <p className="text-sm font-semibold text-slate-300">Photo credits (via Wikimedia Commons)</p>
           <ul className="mt-3 space-y-1 text-xs text-slate-500">
-            {CREDITS.map(([what, who]) => <li key={what}>{what}: {who}</li>)}
+            {PHOTO_CREDITS.map((credit) => <li key={credit}>{credit}</li>)}
           </ul>
         </div>
       </div>

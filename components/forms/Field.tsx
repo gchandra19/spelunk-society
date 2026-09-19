@@ -17,7 +17,7 @@ export function Field({ label, name, error, hint, children }: {
       <label htmlFor={name} className="mb-1.5 block text-sm font-medium text-slate-200">{label}</label>
       {children}
       {hint && !error && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
-      {error && <p className="mt-1 text-xs text-rose-400" role="alert">{error}</p>}
+      {error && <p id={`${name}-error`} className="mt-1 text-xs text-rose-400" role="alert">{error}</p>}
     </div>
   );
 }

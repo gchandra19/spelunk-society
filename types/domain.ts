@@ -17,6 +17,8 @@ export interface Grotto {
   readonly description: string;
   readonly meets: string;
   readonly memberCount: number;
+  readonly ratingAverage: number | null;
+  readonly ratingCount: number;
   readonly image: Photo;
 }
 
@@ -43,6 +45,22 @@ export interface Review {
   readonly authorName: string;
   readonly rating: number;
   readonly body: string;
+  readonly createdAt: string;
+}
+
+export interface GrottoReview {
+  readonly id: string;
+  readonly authorName: string;
+  readonly rating: number;
+  readonly body: string;
+  readonly createdAt: string;
+}
+
+export interface ContactMessage {
+  readonly id: string;
+  readonly name: string;
+  readonly email: string;
+  readonly message: string;
   readonly createdAt: string;
 }
 
