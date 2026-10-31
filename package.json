@@ -17,29 +17,29 @@
     "db:unseed:demo": "tsx scripts/seed-demo.ts --remove"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.1.0",
+    "@neondatabase/serverless": "^1.2.0",
     "bcryptjs": "^3.0.3",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "^0.45.4",
     "lucide-react": "^0.468.0",
     "next": "15.1.11",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "ws": "^8.21.3",
-    "zod": "^4.6.5"
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "ws": "^8.22.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/ws": "^8.18.1",
-    "autoprefixer": "^10.4.20",
-    "dotenv": "^18.0.1",
-    "drizzle-kit": "^0.31.10",
-    "playwright-core": "^1.63.0",
+    "@types/ws": "^8.18.2",
+    "autoprefixer": "^10.6.2",
+    "dotenv": "^18.0.9",
+    "drizzle-kit": "^0.31.11",
+    "playwright-core": "^1.64.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
-    "tsx": "^4.23.13",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }
